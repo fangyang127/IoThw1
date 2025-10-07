@@ -24,8 +24,10 @@ The entire process, from data generation to model evaluation, is designed to pro
 
 ## Development Log
 
-- 60e444f refactor: Update title and enhance plot (2025-10-07)
-- 4c5a868 feat: Create linear regression Streamlit app (2025-10-07)
-- 4da27e7 Add requirements.txt for Streamlit Cloud (2025-10-07)
-- 0edad06 Add homework instructions (hw1.md) (2025-10-07)
-- 25be876 Initial commit: Add linear regression Streamlit app (2025-10-07)
+1.  **Initial Planning**: The project began by translating the initial requirements from `hw1.md` into a structured English plan, `modified_plan.md`.
+2.  **Core Application Development**: The main application was developed in `app.py` using Streamlit. This included creating the UI with interactive sliders for parameters, generating synthetic data, and performing linear regression with scikit-learn.
+3.  **Visualization**: A plot was added to visualize the generated data, the regression line, and key model coefficients. A table for outliers was also included.
+4.  **Dependency Management**: A `requirements.txt` file was created to list all necessary Python packages for easy installation and deployment.
+5.  **First Version**: The initial version of the application and its supporting files were committed and pushed to GitHub.
+6.  **Iteration and Refinement**: Based on user feedback, the application was refined. The main title was updated, and the plot was enhanced to visually distinguish the top 5 outliers, making the analysis more intuitive.
+7.  **Documentation**: This `README.md` file was created to provide a comprehensive overview of the project, a link to the live demo, and a summary of the development process.
