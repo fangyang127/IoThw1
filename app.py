@@ -1,126 +1,108 @@
 
 import streamlit as st
 import numpy as np
-import plotly.express as px
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
 
-# --- CRISP-DM: 1. Business Understanding ---
-st.title("互動式簡單線性迴歸分析")
+# --- CRISP-DM Documentation ---
+# This app follows the CRISP-DM model.
+# 1. Business Understanding: The goal is to create an interactive web app for visualizing simple linear regression. Users can understand the effect of changing parameters like the number of data points, the underlying relationship (coefficient 'a'), and the amount of noise.
+# 2. Data Understanding: The data is synthetically generated. It consists of a single independent variable 'x' and a dependent variable 'y'. The relationship is defined by y = ax + b + noise.
+# 3. Data Preparation: Data is generated and formatted into a Pandas DataFrame, ready for modeling. 'x' is reshaped for scikit-learn.
+# 4. Modeling: A simple linear regression model from scikit-learn is trained on the generated data to find the best-fit line.
+# 5. Evaluation: The model's learned coefficients are displayed. Outliers are identified by calculating the residual (the difference between the actual and predicted 'y' values).
+# 6. Deployment: The application is deployed as a Streamlit web app.
+
+st.set_page_config(layout="wide")
+
+st.title("Interactive Linear Regression Analysis")
+
 st.markdown("""
-### **專案目標**
-這個應用程式旨在模擬一個簡單的線性迴歸問題，並遵循 CRISP-DM 流程。
-使用者可以動態調整以下參數，以觀察它們對模型結果的影響：
-- **真實模型的斜率 (a)**
-- **數據點的數量**
-- **數據的雜訊程度**
-
-透過互動式體驗，我們希望能更深入地理解線性迴歸的基本原理以及各項參數所扮演的角色。
+This application demonstrates a simple linear regression model.
+- **CRISP-DM Stages**: The process from understanding the business need to deploying this app follows the CRISP-DM framework.
+- **Data Generation**: We create synthetic data based on the equation `y = ax + b + noise`.
+- **Modeling**: A linear regression model is trained to find the line of best fit.
+- **Evaluation**: We inspect the model's coefficients and identify outliers.
 """)
 
-# --- CRISP-DM: 2. Data Understanding ---
-st.sidebar.header("參數設定")
-st.sidebar.markdown("請調整以下參數來生成數據：")
+# --- Sidebar for Adjustable Parameters ---
+st.sidebar.header("Adjustable Parameters")
 
-# Allow user to modify parameters
-a_true = st.sidebar.slider("1. 選擇真實模型的斜率 (a)", 0.0, 10.0, 2.5, 0.1)
-b_true = 5.0  # Let's keep b constant for simplicity
-n_points = st.sidebar.slider("2. 選擇數據點數量", 10, 500, 100, 10)
-noise_level = st.sidebar.slider("3. 選擇數據雜訊程度", 0.0, 10.0, 2.0, 0.5)
+num_points = st.sidebar.slider(
+    "Number of data points",
+    min_value=100,
+    max_value=1000,
+    value=300,
+    step=50,
+    help="Number of data points to generate."
+)
 
-# --- CRISP-DM: 3. Data Preparation ---
-st.header("CRISP-DM 步驟")
-st.subheader("3. 數據準備")
+a_coeff = st.sidebar.slider(
+    "Coefficient 'a' (y = ax + b + noise)",
+    min_value=-10.0,
+    max_value=10.0,
+    value=2.5,
+    step=0.5,
+    help="Controls the slope of the underlying linear relationship."
+)
 
-# Generate synthetic data
+noise_var = st.sidebar.slider(
+    "Noise Variance (var)",
+    min_value=0.0,
+    max_value=100.0,
+    value=10.0,
+    step=5.0,
+    help="Controls the amount of random noise added to the data."
+)
+
+# --- Data Generation (Data Preparation) ---
 np.random.seed(42)
-X = np.random.rand(n_points) * 10
-y_true = a_true * X + b_true
-y_noisy = y_true + np.random.normal(0, noise_level, n_points)
+b_coeff_true = 5.0  # Constant 'b'
+x = np.linspace(0, 10, num_points)
+noise = np.random.normal(0, np.sqrt(noise_var), num_points)
+y = a_coeff * x + b_coeff_true + noise
 
-df = pd.DataFrame({
-    'X': X,
-    'y_noisy': y_noisy,
-    'y_true': y_true
-})
+df = pd.DataFrame({'x': x, 'y': y})
 
-st.markdown(f"""
-我們基於您設定的參數生成了 **{n_points}** 個數據點。
-- **真實關係**: `y = {a_true:.2f}x + {b_true:.2f}`
-- **雜訊標準差**: `{noise_level}`
-""")
-st.dataframe(df.head())
+# --- Modeling ---
+X = df[['x']]
+y_true = df['y']
 
-
-# --- CRISP-DM: 4. Modeling ---
-st.subheader("4. 模型建立")
-
-# Reshape X for sklearn
-X_reshaped = X.reshape(-1, 1)
-
-# Create and fit the model
 model = LinearRegression()
-model.fit(X_reshaped, y_noisy)
+model.fit(X, y_true)
+y_pred = model.predict(X)
 
-# Get model predictions
-y_pred = model.predict(X_reshaped)
-df['y_pred'] = y_pred
-
-# Get model parameters
+# --- Evaluation ---
 a_pred = model.coef_[0]
 b_pred = model.intercept_
 
-st.markdown(f"""
-我們使用 `scikit-learn` 的 `LinearRegression` 模型來擬合生成的數據。
-- **模型找到的關係**: `y = {a_pred:.2f}x + {b_pred:.2f}`
-""")
+df['y_pred'] = y_pred
+df['residual'] = abs(df['y'] - df['y_pred'])
+outliers = df.sort_values(by='residual', ascending=False).head(5)
 
 
-# --- CRISP-DM: 5. Evaluation ---
-st.subheader("5. 模型評估")
-
-# Calculate metrics
-mse = mean_squared_error(y_noisy, y_pred)
-r2 = r2_score(y_noisy, y_pred)
-
+# --- Display Results ---
 col1, col2 = st.columns(2)
-col1.metric("均方誤差 (MSE)", f"{mse:.2f}")
-col2.metric("R-squared (R²)", f"{r2:.2f}")
 
-st.markdown("""
-- **均方誤差 (MSE)**: 衡量模型預測值與實際值之間平均平方誤差。值越小，模型越準確。
-- **R-squared (R²)**: 表示模型解釋的數據變異性比例。值越接近 1，表示模型對數據的解釋能力越強。
-""")
+with col1:
+    st.header("Generated Data and Linear Regression")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(df['x'], df['y'], alpha=0.6, label='Generated Data')
+    ax.plot(df['x'], y_pred, color='red', linewidth=2, label='Regression Line')
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("Generated Data vs. Regression Fit")
+    ax.legend()
+    ax.grid(True)
+    st.pyplot(fig)
 
-# Visualization
-st.subheader("數據與模型視覺化")
-fig = px.scatter(df, x='X', y='y_noisy', labels={'y_noisy': '帶有雜訊的數據 (y_noisy)'},
-                 title="數據點、真實關係與擬合模型")
-fig.add_traces(px.line(df, x='X', y='y_true', color_discrete_sequence=['orange']).data)
-fig.add_traces(px.line(df, x='X', y='y_pred', color_discrete_sequence=['green']).data)
+with col2:
+    st.header("Model Coefficients")
+    st.metric(label="Learned Coefficient 'a'", value=f"{a_pred:.4f}", delta=f"{a_pred - a_coeff:.4f} from true 'a'")
+    st.metric(label="Learned Intercept 'b'", value=f"{b_pred:.4f}", delta=f"{b_pred - b_coeff_true:.4f} from true 'b'")
 
-# Update legend names
-fig.data[0].name = '生成的數據點'
-fig.data[1].name = f'真實關係 (y={a_true:.2f}x+{b_true:.2f})'
-fig.data[2].name = f'模型擬合線 (y={a_pred:.2f}x+{b_pred:.2f})'
+    st.header("Top 5 Outliers")
+    st.dataframe(outliers[['x', 'y', 'y_pred', 'residual']].style.format("{:.2f}"))
 
-st.plotly_chart(fig, use_container_width=True)
-
-
-# --- CRISP-DM: 6. Deployment ---
-st.subheader("6. 部署")
-st.success("""
-這個 Streamlit 應用程式本身就是一個已部署的產品！
-
-**如何在本機端運行:**
-1.  確保您已安裝 Python。
-2.  在您的終端機中，安裝必要的套件：
-    ```bash
-    pip install streamlit numpy pandas plotly scikit-learn
-    ```
-3.  執行以下命令來啟動應用程式：
-    ```bash
-    streamlit run app.py
-    ```
-""")
+st.info("To run this app locally, save the code as `app.py` and run `streamlit run app.py` in your terminal.")
