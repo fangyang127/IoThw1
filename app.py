@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -16,7 +15,7 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(layout="wide")
 
-st.title("Interactive Linear Regression Analysis")
+st.title("HW1: Interactive Linear Regression Visualizer")
 
 st.markdown("""
 This application demonstrates a simple linear regression model.
@@ -88,11 +87,15 @@ col1, col2 = st.columns(2)
 with col1:
     st.header("Generated Data and Linear Regression")
     fig, ax = plt.subplots(figsize=(10, 6))
+    # Plot all data points
     ax.scatter(df['x'], df['y'], alpha=0.6, label='Generated Data')
+    # Plot the regression line
     ax.plot(df['x'], y_pred, color='red', linewidth=2, label='Regression Line')
+    # Highlight the outliers
+    ax.scatter(outliers['x'], outliers['y'], color='orange', s=60, edgecolor='k', zorder=5, label='Top 5 Outliers')
     ax.set_xlabel("x")
     ax.set_ylabel("y")
-    ax.set_title("Generated Data vs. Regression Fit")
+    ax.set_title("Linear Regression Fit and Outliers")
     ax.legend()
     ax.grid(True)
     st.pyplot(fig)
